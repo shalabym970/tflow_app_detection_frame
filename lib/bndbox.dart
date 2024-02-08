@@ -8,12 +8,10 @@ class BndBox extends StatelessWidget {
   final double screenH;
   final double screenW;
 
-  BndBox(
-      this.results, this.previewH, this.previewW, this.screenH, this.screenW);
+  BndBox(this.results, this.previewH, this.previewW, this.screenH, this.screenW);
 
   @override
   Widget build(BuildContext context) {
-
     List<Widget> _renderBoxes() {
       return results.map((re) {
         var _x = re["rect"]["x"];
@@ -67,8 +65,9 @@ class BndBox extends StatelessWidget {
         );
       }).toList();
     }
+
     return Stack(
-      children: _renderBoxes() ,
+      children: _renderBoxes(),
     );
   }
 }
