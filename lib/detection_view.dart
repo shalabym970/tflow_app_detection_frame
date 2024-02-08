@@ -4,8 +4,6 @@ import 'bndbox.dart';
 import 'cameraWidget.dart';
 import 'package:camera/camera.dart';
 
-import 'models.dart';
-
 class DetectionView extends StatefulWidget {
   const DetectionView({super.key, required this.cameras});
   final List<CameraDescription> cameras;
@@ -15,7 +13,7 @@ class DetectionView extends StatefulWidget {
 }
 
 class _DetectionViewState extends State<DetectionView> {
-  var _model= ssd;
+
   List<dynamic>? _recognitions;
   int _imageHeight = 0;
   int _imageWidth = 0;
@@ -34,7 +32,6 @@ class _DetectionViewState extends State<DetectionView> {
         children: [
           CameraWidget(
             widget.cameras,
-            _model,
             setRecognitions,
           ),
           BndBox(
@@ -42,8 +39,7 @@ class _DetectionViewState extends State<DetectionView> {
               math.max(_imageHeight, _imageWidth),
               math.min(_imageHeight, _imageWidth),
               screen.height,
-              screen.width,
-              _model),
+              screen.width),
         ],
       ),
     );

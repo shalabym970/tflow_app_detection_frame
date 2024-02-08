@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter_tflite/flutter_tflite.dart';
 import 'detection_view.dart';
-import 'models.dart';
 
 class HomePage extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -34,7 +33,7 @@ class _HomePageState extends State<HomePage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           TextButton(
-            child: const Text(ssd),
+            child: const Text('ssd'),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(

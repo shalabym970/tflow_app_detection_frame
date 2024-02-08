@@ -2,16 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'dart:math' as math;
 import 'package:flutter_tflite/flutter_tflite.dart';
-import 'models.dart';
 
 typedef void Callback(List<dynamic> list, int h, int w);
 
 class CameraWidget extends StatefulWidget {
   final List<CameraDescription> cameras;
   final Callback setRecognitions;
-  final String model;
 
-  CameraWidget(this.cameras, this.model, this.setRecognitions);
+  CameraWidget(this.cameras,  this.setRecognitions);
 
   @override
   _CameraWidgetState createState() => new _CameraWidgetState();
@@ -54,7 +52,7 @@ class _CameraWidgetState extends State<CameraWidget> {
               imageMean: 127.5,
               imageStd: 127.5,
               numResultsPerClass: 1,
-              threshold: widget.model == yolo ? 0.2 : 0.4,
+              threshold: 0.4,
             ).then((recognitions) {
               int endTime = new DateTime.now().millisecondsSinceEpoch;
               print("Detection took ${endTime - startTime}");
