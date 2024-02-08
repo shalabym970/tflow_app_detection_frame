@@ -1,50 +1,43 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'dart:math' as math;
 import 'package:flutter_tflite/flutter_tflite.dart';
-import 'models.dart';
 
 typedef void Callback(List<dynamic> list, int h, int w);
 
-class Camera extends StatefulWidget {
+class CameraScreen extends StatefulWidget {
   final List<CameraDescription> cameras;
   final Callback setRecognitions;
-  final String model;
 
-  Camera(this.cameras, this.model, this.setRecognitions);
+  CameraScreen({required this.cameras, required this.setRecognitions});
 
   @override
-  _CameraState createState() => new _CameraState();
+  _CameraScreenState createState() => new _CameraScreenState();
 }
 
-class _CameraState extends State<Camera> {
-  CameraController? controller;
+class _CameraScreenState extends State<CameraScreen> {
+  CameraController? cameraController;
   bool isDetecting = false;
 
-  @override
-  void initState() {
-    super.initState();
 
-    if (widget.cameras.length < 1) {
-      print('No camera is found');
-    } else {
-      controller = new CameraController(
-        widget.cameras[0],
-        ResolutionPreset.high,
-      );
-      controller?.initialize().then((_) {
-        if (!mounted) {
-          return;
-        }
-        setState(() {});
 
-        controller?.startImageStream((CameraImage img) {
-          if (!isDetecting) {
-            isDetecting = true;
+  Future<void> initCamera() async {
+    try {
+      if (widget.cameras.isEmpty) {
+        print('No camera is found');
+        return;
+      }
+      cameraController =
+          CameraController(widget.cameras[0], ResolutionPreset.high);
+      await cameraController!.initialize();
+      if (mounted) {
+        setState(() {
+          cameraController!.startImageStream((img) {
+            if (!isDetecting) {
+              isDetecting = true;
+              int startTime = new DateTime.now().millisecondsSinceEpoch;
 
-            int startTime = new DateTime.now().millisecondsSinceEpoch;
-
-            if (widget.model == mobilenet) {
               Tflite.runModelOnFrame(
                 bytesList: img.planes.map((plane) {
                   return plane.bytes;
@@ -54,72 +47,54 @@ class _CameraState extends State<Camera> {
                 numResults: 2,
               ).then((recognitions) {
                 int endTime = new DateTime.now().millisecondsSinceEpoch;
+                if(recognitions!.isNotEmpty) {
+                  String label = recognitions.first['label'];
+                  print("=========== label  : $label ===========");
+                  print("=========== recognitions  : ${recognitions.toString()} ===========");
+                  widget.setRecognitions(recognitions, img.height, img.width);
+                }
                 print("Detection took ${endTime - startTime}");
 
-                widget.setRecognitions(recognitions!, img.height, img.width);
+
 
                 isDetecting = false;
               });
             }
-            // } else if (widget.model == posenet) {
-            //   Tflite.runPoseNetOnFrame(
-            //     bytesList: img.planes.map((plane) {
-            //       return plane.bytes;
-            //     }).toList(),
-            //     imageHeight: img.height,
-            //     imageWidth: img.width,
-            //     numResults: 2,
-            //   ).then((recognitions) {
-            //     int endTime = new DateTime.now().millisecondsSinceEpoch;
-            //     print("Detection took ${endTime - startTime}");
-            //
-            //     widget.setRecognitions(recognitions!, img.height, img.width);
-            //
-            //     isDetecting = false;
-            //   });
-            // } else {
-            //   Tflite.detectObjectOnFrame(
-            //     bytesList: img.planes.map((plane) {
-            //       return plane.bytes;
-            //     }).toList(),
-            //     model: widget.model == yolo ? "YOLO" : "SSDMobileNet",
-            //     imageHeight: img.height,
-            //     imageWidth: img.width,
-            //     imageMean: widget.model == yolo ? 0 : 127.5,
-            //     imageStd: widget.model == yolo ? 255.0 : 127.5,
-            //     numResultsPerClass: 1,
-            //     threshold: widget.model == yolo ? 0.2 : 0.4,
-            //   ).then((recognitions) {
-            //     int endTime = new DateTime.now().millisecondsSinceEpoch;
-            //     print("Detection took ${endTime - startTime}");
-            //
-            //     widget.setRecognitions(recognitions!, img.height, img.width);
-            //
-            //     isDetecting = false;
-            //   });
-            // }
-          }
+          });
         });
-      });
+      } else {
+        return;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print("Error initializing camera: $e");
+      }
     }
   }
 
   @override
+  void initState() {
+    super.initState();
+
+    initCamera();
+  }
+
+  @override
   void dispose() {
-    controller?.dispose();
+    cameraController?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (controller == null || !controller!.value.isInitialized) {
+    if (cameraController == null || !cameraController!.value.isInitialized) {
       return Container();
     }
 
     Size? tmp = MediaQuery.of(context).size;
     var screenH = math.max(tmp.height, tmp.width);
     var screenW = math.min(tmp.height, tmp.width);
-    tmp = controller!.value.previewSize;
+    tmp = cameraController!.value.previewSize;
     var previewH = math.max(tmp!.height, tmp.width);
     var previewW = math.min(tmp.height, tmp.width);
     var screenRatio = screenH / screenW;
@@ -130,7 +105,7 @@ class _CameraState extends State<Camera> {
           screenRatio > previewRatio ? screenH : screenW / previewW * previewH,
       maxWidth:
           screenRatio > previewRatio ? screenH / previewH * previewW : screenW,
-      child: CameraPreview(controller!),
+      child: CameraPreview(cameraController!),
     );
   }
 }
